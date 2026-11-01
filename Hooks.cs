@@ -8,6 +8,7 @@ static class Native
     public delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
 
     [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X, Y; }
+    [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
     [StructLayout(LayoutKind.Sequential)]
     public struct MSLLHOOKSTRUCT { public POINT pt; public uint mouseData, flags, time; public IntPtr extra; }
 
@@ -17,6 +18,7 @@ static class Native
     [DllImport("user32.dll")] public static extern IntPtr CallNextHookEx(IntPtr h, int n, IntPtr w, IntPtr l);
     [DllImport("kernel32.dll")] public static extern IntPtr GetModuleHandle(string? name);
     [DllImport("user32.dll")] public static extern bool GetCursorPos(out POINT p);
+    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
     [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr h, int i);
     [DllImport("user32.dll")] public static extern int SetWindowLong(IntPtr h, int i, int v);
     [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, uint data, UIntPtr extra);
@@ -75,7 +77,7 @@ sealed class GlobalHooks : IDisposable
         if (n >= 0 && ((int)w == WM_KEYDOWN || (int)w == WM_SYSKEYDOWN))
         {
             int vk = Marshal.ReadInt32(l);
-            if ((vk == 0x12 || vk == 0xA4 || vk == 0xA5) && _down && _moved)
+            if ((vk == 0x10 || vk == 0xA0 || vk == 0xA1) && _down && _moved)
             {
                 Native.GetCursorPos(out var p);
                 ShiftDuringDrag?.Invoke(p.X, p.Y);

@@ -26,7 +26,7 @@ sealed class RingWindow : Window
 {
     const double C = 230;
     const double R1 = 46, R2 = 108;
-    const double R3 = 116, R4 = 190;
+    const double R3 = 114, R4 = 205;
 
     static readonly Dictionary<string, Color> Accent = new()
     {
@@ -73,7 +73,7 @@ sealed class RingWindow : Window
 
         _root.DragEnter += OnEnter;
         _root.DragOver += (_, e) => Over(e);
-        _root.DragLeave += (_, _) => { if (_direct) SetOpt(-1); else SetCat(-1); };
+        _root.DragLeave += OnLeave;
         _root.Drop += OnDrop;
 
         _hideTimer.Tick += (_, _) => { _hideTimer.Stop(); HideNow(); };
@@ -114,7 +114,7 @@ sealed class RingWindow : Window
 
     static Color AccentOf(string name) => Accent.TryGetValue(name, out var c) ? c : Colors.SteelBlue;
 
-    static Path[] DrawRing(Canvas layer, Ring ring, string[] labels, Color accent)
+    static Path[] DrawRing(Canvas layer, Ring ring, string[] labels, Color accent, double font = 15)
     {
         var paths = new Path[ring.Count];
         for (int i = 0; i < ring.Count; i++)
@@ -129,7 +129,7 @@ sealed class RingWindow : Window
             layer.Children.Add(paths[i]);
             var (lx, ly) = Pt((ring.R1 + ring.R2) / 2, mid);
             var tb = new TextBlock { Text = labels[i], Width = 70, TextAlignment = TextAlignment.Center, Foreground = Brushes.White,
-                                     FontSize = 15, FontWeight = FontWeights.SemiBold, IsHitTestVisible = false };
+                                     FontSize = font, FontWeight = FontWeights.SemiBold, IsHitTestVisible = false };
             Canvas.SetLeft(tb, lx - 35); Canvas.SetTop(tb, ly - 10);
             layer.Children.Add(tb);
         }
@@ -178,11 +178,12 @@ sealed class RingWindow : Window
         if (_direct) _optRing = new Ring(R1, R2, 0, 360.0 / n, n);
         else
         {
-            double step = Math.Min(36, 330.0 / n);
-            double mid = c * (360.0 / _cats.Length);
+            double span = 360.0 / _cats.Length;
+            double step = Math.Min(36, span / n);
+            double mid = c * span;
             _optRing = new Ring(R3, R4, mid - (n - 1) * step / 2, step, n);
         }
-        _optPaths = DrawRing(_outerLayer, _optRing, Array.ConvertAll(cat.Targets, t => t.Label), AccentOf(cat.Name));
+        _optPaths = DrawRing(_outerLayer, _optRing, Array.ConvertAll(cat.Targets, t => t.Label), AccentOf(cat.Name), _direct ? 15 : 13.5);
     }
 
     void SetCat(int c)
@@ -239,6 +240,14 @@ sealed class RingWindow : Window
         UpdateHover(e.GetPosition(_root));
         e.Effects = (_cat >= 0 && _opt >= 0) ? DragDropEffects.Copy : DragDropEffects.None;
         e.Handled = true;
+    }
+
+    void OnLeave(object s, DragEventArgs e)
+    {
+        Native.GetCursorPos(out var p);
+        Native.GetWindowRect(new WindowInteropHelper(this).Handle, out var r);
+        if (p.X >= r.Left && p.X < r.Right && p.Y >= r.Top && p.Y < r.Bottom) return;
+        if (_direct) SetOpt(-1); else SetCat(-1);
     }
 
     void OnDrop(object s, DragEventArgs e)
