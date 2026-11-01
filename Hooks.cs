@@ -45,7 +45,19 @@ sealed class GlobalHooks : IDisposable
     {
         var mod = Native.GetModuleHandle(null);
         _mouseHook = Native.SetWindowsHookEx(WH_MOUSE_LL, _mouseProc, mod, 0);
-        _keyHook = Native.SetWindowsHookEx(WH_KEYBOARD_LL, _keyProc, mod, 0);
+    }
+
+    void InstallKeyHook()
+    {
+        if (_keyHook == IntPtr.Zero)
+            _keyHook = Native.SetWindowsHookEx(WH_KEYBOARD_LL, _keyProc, Native.GetModuleHandle(null), 0);
+    }
+
+    void RemoveKeyHook()
+    {
+        if (_keyHook == IntPtr.Zero) return;
+        Native.UnhookWindowsHookEx(_keyHook);
+        _keyHook = IntPtr.Zero;
     }
 
     IntPtr MouseProc(int n, IntPtr w, IntPtr l)
@@ -61,11 +73,16 @@ sealed class GlobalHooks : IDisposable
             else if (msg == WM_MOUSEMOVE && _down && !_moved)
             {
                 var p = Marshal.PtrToStructure<Native.MSLLHOOKSTRUCT>(l).pt;
-                if (Math.Abs(p.X - _downPt.X) + Math.Abs(p.Y - _downPt.Y) > 12) _moved = true;
-            }
-            else if (msg == WM_LBUTTONUP)
-            {
-                _down = false; _moved = false;
+                if (Math.Abs(p.X - _downPt.X) + Math.Abs(p.Y - _downPt.Y)                 > 12)
+                                {
+                                    _moved = true;
+                                    InstallKeyHook();
+                                }
+                            }
+                            else if (msg == WM_LBUTTONUP)
+                            {
+                                _down = false; _moved = false;
+                                RemoveKeyHook();
                 DragEnded?.Invoke();
             }
         }
@@ -90,6 +107,6 @@ sealed class GlobalHooks : IDisposable
     public void Dispose()
     {
         if (_mouseHook != IntPtr.Zero) Native.UnhookWindowsHookEx(_mouseHook);
-        if (_keyHook != IntPtr.Zero) Native.UnhookWindowsHookEx(_keyHook);
+        RemoveKeyHook();
     }
 }
