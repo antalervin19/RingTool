@@ -77,7 +77,7 @@ sealed class GlobalHooks : IDisposable
         if (n >= 0 && ((int)w == WM_KEYDOWN || (int)w == WM_SYSKEYDOWN))
         {
             int vk = Marshal.ReadInt32(l);
-            if ((vk == 0x10 || vk == 0xA0 || vk == 0xA1) && _down && _moved)
+            if ((vk == 0x12 || vk == 0xA4 || vk == 0xA5) && _down && _moved)
             {
                 Native.GetCursorPos(out var p);
                 ShiftDuringDrag?.Invoke(p.X, p.Y);
