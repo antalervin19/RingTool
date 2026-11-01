@@ -149,7 +149,7 @@ Add a line to the right list (`ImageT`, `VideoT`, `AudioT`, `VideoImgT`) and it 
 ## Credits and licenses
 
 - Conversions are powered by [**FFmpeg**](https://ffmpeg.org/). RingTool downloads the Windows builds from [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds), which are licensed under the GPL.
-- RingTool itself is released under the **MIT License**. Add a `LICENSE` file to the repo root.
+- RingTool itself is released under the **Creative Commons Public License**.
 
 ---
 
