@@ -29,7 +29,7 @@ The converted copy is saved next to the original. **Your original file is never 
 <p align="center">
   <img src="docs/ring-video.gif" alt="Video file: category ring with options" width="420">
   &nbsp;
-  <img src="docs/ring-image.gif" alt="Image file: direct options ring" width="420">
+  <img src="docs/demo.gif" alt="Image file: direct options ring" width="420">
 </p>
 
 ## Features
@@ -61,7 +61,7 @@ The file's own format is hidden, so an MP4 never offers "MP4".
 
 **Requirements:** Windows 10 or 11 (64-bit). No admin rights needed, and you don't need to install .NET.
 
-1. Go to the [**Releases page**](https://github.com/YOUR-USER/RingTool/releases/latest).
+1. Go to the [**Releases page**](https://github.com/antalervin19/RingTool/releases/latest).
 2. Under **Assets**, download **`RingToolSetup.exe`**.
    > Don't download the `.zip` from Assets. That's the app itself, which the installer fetches for you.
 3. Run `RingToolSetup.exe`. A small splash appears while it:
@@ -90,7 +90,7 @@ Open **Settings > Apps > Installed apps**, find **RingTool**, and choose **Unins
 You need the [.NET 8 SDK](https://dotnet.microsoft.com/download) on Windows.
 
 ```bash
-git clone https://github.com/YOUR-USER/RingTool.git
+git clone https://github.com/antalervin19/RingTool.git
 cd RingTool
 
 # FFmpeg: put ffmpeg.exe on your PATH, or run RingToolSetup once
@@ -121,7 +121,7 @@ Pushing a tag such as `v1.0.0` triggers the GitHub Action in `.github/workflows/
 Contributions are welcome, whether it's a bug report, a new format, or a whole feature.
 
 **Reporting a bug**
-- Open an [issue](https://github.com/YOUR-USER/RingTool/issues) with your Windows version, what you dragged (file type), what you expected, and what happened.
+- Open an [issue](https://github.com/antalervin19/RingTool/issues) with your Windows version, what you dragged (file type), what you expected, and what happened.
 - A short screen recording or GIF helps a lot.
 
 **Sending code**
