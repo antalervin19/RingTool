@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RingTool")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+223832e9a49a8e8488db1f29b1b7582deb4cc930")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+90c8bd830eb76a0016141376745ad1958bd5e9b2")]
 [assembly: System.Reflection.AssemblyProductAttribute("RingTool")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RingTool")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
