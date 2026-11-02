@@ -18,10 +18,12 @@ fn main() {
     platform::windows::initialize_ole().expect("Failed to initialize OLE");
     platform::windows::register_app_id();
 
+    // Don't re-check right after an update, otherwise a failed update loops forever.
     if let Some(version) = common::update::updated_version() {
         platform::windows::notify_updated(&version);
+    } else {
+        common::update::spawn_check();
     }
-    common::update::spawn_check();
 
     let menu = create_test_menu();
 
