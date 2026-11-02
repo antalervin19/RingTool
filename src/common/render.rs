@@ -55,7 +55,6 @@ pub fn text_width(text: &str, size: f32) -> f32 {
     text.chars().map(|c| cached_glyph(c, size).0.advance_width).sum()
 }
 
-/// Draws left-aligned horizontal text; `y` is the vertical center of the line.
 pub fn draw_text(pm: &mut Pixmap, text: &str, x: f32, y: f32, size: f32, color: (u8, u8, u8, u8)) {
     let width = pm.width() as i32;
     let height = pm.height() as i32;

@@ -76,7 +76,7 @@ static DROP_SELECTION_VALID: AtomicBool = AtomicBool::new(false);
 ///
 /// Please increment this counter to indicate how many hours you have spent untangling this mess.
 ///
-/// Hours spent = 5
+/// Hours spent = 6.4
 
 pub fn initialize_ole() -> Result<()> {
     unsafe {
@@ -735,7 +735,7 @@ fn DragEnter(
                         url,
                         &option.id,
                         &option.output_format,
-                        if settings::get().use_explorer_folder { explorer_folder() } else { None },
+                        if crate::common::settings::get().use_explorer_folder { explorer_folder() } else { None },
                     ),
                     None => crate::common::convert::convert(&files, &option.id, &option.output_format),
                 };

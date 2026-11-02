@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 mod common;
 mod platform;
 
@@ -6,12 +8,12 @@ use common::render::render_menu;
 use tray_icon::{TrayIcon, TrayIconBuilder, Icon};
 use tray_icon::menu::{Menu, MenuItem, MenuEvent};
 
-// TODO: make these configurable
 pub const FFMPEG_PATH: &str = r"C:\Users\antalervin19\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg.Shared_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.2-full_build-shared\bin\ffmpeg.exe";
 pub const BLENDER_PATH: &str = r"D:\SteamLibrary\steamapps\common\Blender\blender.exe";
 pub const YTDLP_PATH: &str = r"C:\yt-dlp\yt-dlp.exe";
 
 fn main() {
+    common::settings::load();
 
     platform::windows::initialize_ole().expect("Failed to initialize OLE");
     platform::windows::register_app_id();
@@ -58,7 +60,7 @@ fn create_tray_icon() -> TrayIcon {
 
     MenuEvent::set_event_handler(Some(move |event: tray_icon::menu::MenuEvent| {
         if event.id == settings_id {
-            println!("Settings selected");
+            platform::settings_window::open();
         } else if event.id == quit_id {
             platform::windows::request_quit();
         }

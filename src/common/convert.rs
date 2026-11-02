@@ -75,7 +75,6 @@ fn run(mut command: Command) -> Result<(), String> {
     }
 }
 
-/// Converts the dropped files according to the selected option id and output format.
 pub fn convert(files: &[PathBuf], option_id: &str, output_format: &str) -> Result<PathBuf, String> {
     if option_id.starts_with("slideshow_") {
         let (image, audio) =
@@ -100,26 +99,38 @@ pub fn convert(files: &[PathBuf], option_id: &str, output_format: &str) -> Resul
     } else if IMAGE_FORMATS.contains(&input_ext.as_str())
         || AUDIO_FORMATS.contains(&input_ext.as_str())
     {
-        let mut cmd = Command::new(settings::get().ffmpeg);
+        let tools = settings::get();
+        let mut cmd = Command::new(&tools.ffmpeg);
         cmd.args(["-hide_banner", "-n", "-i"]).arg(input);
         if output_format == "gif" || output_format == "ico" || output_format == "tiff" {
             cmd.args(["-frames:v", "1"]);
         }
         if output_format == "ico" {
             cmd.args([
-                "-vf",
-                "scale=w=256:h=256:force_original_aspect_ratio=decrease",
+                "-vf".to_string(),
+                format!(
+                    "scale=w={0}:h={0}:force_original_aspect_ratio=decrease",
+                    tools.ico_size
+                ),
             ]);
         }
+        apply_image_quality(&mut cmd, output_format, &tools);
+        apply_audio_quality(&mut cmd, output_format, &tools);
         run_ffmpeg_output(cmd, &output)?;
     } else {
-        let mut cmd = Command::new(settings::get().ffmpeg);
+        let tools = settings::get();
+        let mut cmd = Command::new(&tools.ffmpeg);
         cmd.args(["-hide_banner", "-n", "-i"]).arg(input);
 
         if option_id.starts_with("images_") {
             cmd.args(["-frames:v", "1"]);
+            apply_image_quality(&mut cmd, output_format, &tools);
         } else if option_id.starts_with("audio_") {
             cmd.arg("-vn");
+            apply_audio_quality(&mut cmd, output_format, &tools);
+        } else {
+            apply_video_quality(&mut cmd, output_format, &tools);
+            apply_audio_quality(&mut cmd, output_format, &tools);
         }
         run_ffmpeg_output(cmd, &output)?;
     }
@@ -127,7 +138,39 @@ pub fn convert(files: &[PathBuf], option_id: &str, output_format: &str) -> Resul
     Ok(output)
 }
 
-/// Downloads a URL with yt-dlp into `target_dir`, falling back to the Downloads folder.
+fn apply_audio_quality(cmd: &mut Command, format: &str, tools: &settings::Settings) {
+    if matches!(format, "mp3" | "aac" | "ogg" | "opus" | "m4a") {
+        cmd.args(["-b:a".to_string(), format!("{}k", tools.audio_kbps)]);
+    }
+}
+
+fn apply_image_quality(cmd: &mut Command, format: &str, tools: &settings::Settings) {
+    match format {
+        "jpg" => {
+            let q = 2 + (100 - tools.image_quality.min(100)) * 29 / 100;
+            cmd.args(["-q:v".to_string(), q.to_string()]);
+        }
+        "webp" => {
+            cmd.args(["-quality".to_string(), tools.image_quality.to_string()]);
+        }
+        _ => {}
+    }
+}
+
+fn apply_video_quality(cmd: &mut Command, format: &str, tools: &settings::Settings) {
+    let crf = tools.video_crf.to_string();
+
+    match format {
+        "mp4" | "mkv" | "mov" => {
+            cmd.args(["-c:v", "libx264", "-crf", &crf]);
+        }
+        "webm" => {
+            cmd.args(["-c:v", "libvpx-vp9", "-crf", &crf, "-b:v", "0"]);
+        }
+        _ => {}
+    }
+}
+
 pub fn download_url(
     url: &str,
     option_id: &str,
@@ -150,6 +193,9 @@ pub fn download_url(
 
     if option_id.starts_with("url_audio_") {
         cmd.args(["-x", "--audio-format", format]);
+        if matches!(format, "mp3" | "m4a" | "opus") {
+            cmd.arg("--audio-quality").arg(format!("{}K", tools.audio_kbps));
+        }
     } else {
         cmd.args(["-f", "bv*+ba/b", "--merge-output-format", format]);
     }
@@ -187,7 +233,8 @@ fn image_audio_to_video(image: &Path, audio: &Path, format: &str) -> Result<Path
         .unwrap_or("output");
     let output = unique_output(dir, stem, format);
 
-    let mut cmd = Command::new(settings::get().ffmpeg);
+    let tools = settings::get();
+    let mut cmd = Command::new(&tools.ffmpeg);
     cmd.args(["-hide_banner", "-n", "-loop", "1", "-framerate", "2", "-i"])
         .arg(image)
         .arg("-i")
@@ -197,14 +244,12 @@ fn image_audio_to_video(image: &Path, audio: &Path, format: &str) -> Result<Path
             "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p",
             "-c:v",
             "libx264",
-            "-tune",
-            "stillimage",
-            "-c:a",
-            "aac",
-            "-b:a",
-            "192k",
-            "-shortest",
-        ]);
+            "-crf",
+        ])
+        .arg(tools.video_crf.to_string())
+        .args(["-tune", "stillimage", "-c:a", "aac", "-b:a"])
+        .arg(format!("{}k", tools.audio_kbps))
+        .arg("-shortest");
 
     if format == "mp4" || format == "mov" {
         cmd.args(["-movflags", "+faststart"]);

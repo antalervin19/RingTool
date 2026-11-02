@@ -29,7 +29,7 @@ pub enum Menu {
 fn make_options(prefix: &str, formats: &[&str], source: &str) -> Vec<MenuOption> {
     formats
         .iter()
-        .filter(|format| **format != source)
+        .filter(|format| **format != source && super::settings::format_enabled(format))
         .map(|format| MenuOption {
             id: format!("{prefix}_{format}"),
             label: format.to_uppercase(),
@@ -60,7 +60,6 @@ fn extension_of(path: &Path) -> Option<String> {
     Some(path.extension()?.to_str()?.to_ascii_lowercase())
 }
 
-/// Returns (image, audio) if the selection is exactly one image and one audio file.
 pub fn split_image_audio(paths: &[PathBuf]) -> Option<(&PathBuf, &PathBuf)> {
     if paths.len() != 2 {
         return None;
@@ -105,6 +104,7 @@ pub fn menu_for_files(paths: &[PathBuf]) -> Option<Menu> {
 
             let options = ["mp4", "mkv", "mov"]
                 .iter()
+                .filter(|format| super::settings::format_enabled(format))
                 .map(|format| MenuOption {
                     id: format!("slideshow_{format}"),
                     label: format.to_uppercase(),
