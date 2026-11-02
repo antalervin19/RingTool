@@ -26,12 +26,16 @@ pub struct Settings {
     pub ico_size: u32,
 }
 
+fn default_tool(path: &str, command: &str) -> String {
+    if std::path::Path::new(path).exists() { path.into() } else { command.into() }
+}
+
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            ffmpeg: crate::FFMPEG_PATH.into(),
-            blender: crate::BLENDER_PATH.into(),
-            ytdlp: crate::YTDLP_PATH.into(),
+            ffmpeg: default_tool(crate::FFMPEG_PATH, "ffmpeg"),
+            blender: default_tool(crate::BLENDER_PATH, "blender"),
+            ytdlp: default_tool(crate::YTDLP_PATH, "yt-dlp"),
             use_explorer_folder: true,
             disabled_formats: Vec::new(),
             audio_kbps: 192,

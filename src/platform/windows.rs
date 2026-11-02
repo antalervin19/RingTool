@@ -839,6 +839,14 @@ fn notify(title: &str, body: &str) {
         .show();
 }
 
+pub fn notify_updated(version: &str) {
+    let _ = winrt_notification::Toast::new(APP_ID)
+        .title("RingTool")
+        .text1("RingTool was updated in the background")
+        .text2(&format!("Now running Latest: {version}"))
+        .show();
+}
+
 fn selected_option() -> Option<crate::common::menu::MenuOption> {
     let menu = MENU.get()?.read().unwrap().clone();
     let option = usize::try_from(HOVERED_OPTION.load(Ordering::Relaxed)).ok()?;

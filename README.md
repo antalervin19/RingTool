@@ -40,7 +40,9 @@ Converted files are new copies saved next to the original, and existing files ar
 - **Download links:** drag a link onto the ring and download it as video or audio with yt-dlp.
 - **3D models:** convert between model formats through Blender.
 - **Notifications:** Windows notifications when a conversion starts, finishes or fails.
-- **Settings window:** tool paths, which formats appear on the ring, and quality settings..
+- **Settings window:** tool paths, which formats appear on the ring, and quality settings.
+- **Installer:** a themed setup that installs RingTool and can also install FFmpeg, yt-dlp and Blender for you.
+- **Automatic updates:** RingTool checks for a new release on startup, updates itself quietly and restarts..
 
 ## Supported conversions
 
@@ -68,7 +70,20 @@ Dragged links are downloaded with yt-dlp, so they work for the sites it supports
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) for link downloads (optional)
 - [Blender](https://www.blender.org/) 4.0 or newer for 3D models (optional)
 
-When installing via the RingToolInstaller these dependencies will be listed as optional downloadables! 
+The setup can install these for you (see below), or you can set their locations in **Settings**.
+
+## Installing
+
+Download `RingToolSetup.exe` and run it. It:
+
+1. Downloads and installs the latest RingTool release to `%LOCALAPPDATA%\RingTool`.
+2. Asks whether to install **FFmpeg**, **yt-dlp** and **Blender** (4.5 LTS, portable). Choose any or none.
+3. Puts the chosen tools in `%LOCALAPPDATA%\RingTool\tools`, adds them to your user PATH and fills in their paths in Settings.
+4. Sets RingTool to start with Windows and adds an entry under Apps > Installed apps, which also removes the tools it installed.
+
+## Updates
+
+When the setup is installed next to RingTool, the app checks the latest GitHub release on startup. If it is newer than the running version, the setup downloads it in the background, replaces the exe and restarts RingTool, then shows a notification with the new version. For this to work, release tags must match the version in `Cargo.toml` (tag `v0.2.0` for version `0.2.0`).
 
 ## Settings
 
@@ -121,7 +136,10 @@ The result is `target\release\RingTool.exe`. Pushing a tag such as `v0.1.0` runs
 | `src/common/ring.rs` | Ring geometry and hit testing |
 | `src/common/convert.rs` | FFmpeg, Blender and yt-dlp commands |
 | `src/common/settings.rs` | Settings storage and defaults |
+| `src/common/update.rs` | Startup update check |
 | `build.rs` | Embeds `icon.ico` into the exe |
+
+The installer lives in a separate C# (.NET 8, WPF) project, `RingToolSetup`.
 
 ## Contributing
 

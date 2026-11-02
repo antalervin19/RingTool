@@ -13,6 +13,7 @@ fontdue = "0.9"
 windows-core = "=0.62.2"
 winrt-notification = "0.5.1"
 winreg = "0.56.0"
+ureq = "2"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62.2", features = [
