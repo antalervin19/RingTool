@@ -104,6 +104,19 @@ Right-click the tray icon and choose **Settings**.
 
 Settings are saved automatically to `%APPDATA%\RingTool\settings.ini`.
 
+## Themes
+
+Right-click the tray icon and pick a theme under **Theme**. RingTool ships with Midnight, Daylight, Ember, Forest and Mono. They are plain text files in `%LOCALAPPDATA%\RingTool\themes` (tray > Theme > Open themes folder).
+
+To make your own, copy a file, change its `name` and the `#RRGGBB` colours, then restart RingTool and select it. Missing colours fall back to Midnight. Built-in files are only written when missing, so your edits are never overwritten.
+
+| Key | Used for |
+|-----|----------|
+| `background`, `panel`, `field`, `border` | Settings window surfaces and outlines |
+| `text`, `muted`, `label`, `button_text`, `highlight` | Text, button text and hover outline |
+| `accent1` to `accent4` | Ring segments (first three) and settings accents |
+| `ring_fill`, `ring_text` | Unlit ring segments and ring labels |
+
 The default tool paths are set in `src/main.rs` (`FFMPEG_PATH`, `BLENDER_PATH`, `YTDLP_PATH`) and currently point to the author's machine. Change them in Settings, or edit those constants before building.
 
 ## Building from source
@@ -136,6 +149,7 @@ The result is `target\release\RingTool.exe`. Pushing a tag such as `v0.1.0` runs
 | `src/common/ring.rs` | Ring geometry and hit testing |
 | `src/common/convert.rs` | FFmpeg, Blender and yt-dlp commands |
 | `src/common/settings.rs` | Settings storage and defaults |
+| `src/common/theme.rs` | Built-in themes and loading theme files |
 | `src/common/update.rs` | Startup update check |
 | `build.rs` | Embeds `icon.ico` into the exe |
 

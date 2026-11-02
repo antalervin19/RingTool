@@ -1,4 +1,5 @@
 
+use super::theme;
 use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug)]
@@ -89,8 +90,8 @@ pub fn menu_for_url() -> Menu {
 
     Menu::MultiRing {
         categories: vec![
-            make_category("url_video", "Video", (45, 156, 219), &video, ""),
-            make_category("url_audio", "Audio", (245, 158, 11), &audio, ""),
+            make_category("url_video", "Video", theme::get().accents[2], &video, ""),
+            make_category("url_audio", "Audio", theme::get().accents[1], &audio, ""),
         ],
     }
 }
@@ -148,21 +149,21 @@ pub fn menu_for_file(path: &Path) -> Option<Menu> {
             make_category(
                 "images",
                 "Images · First Frame",
-                (168, 85, 247),
+                theme::get().accents[0],
                 &image_formats,
                 "",
             ),
             make_category(
                 "audio",
                 "Audio · Extract",
-                (245, 158, 11),
+                theme::get().accents[1],
                 &audio_formats,
                 "",
             ),
             make_category(
                 "video",
                 "Video",
-                (45, 156, 219),
+                theme::get().accents[2],
                 &video_formats,
                 &extension,
             ),

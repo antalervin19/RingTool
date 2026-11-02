@@ -6,7 +6,12 @@ mod platform;
 use common::menu::create_test_menu;
 use common::render::render_menu;
 use tray_icon::{TrayIcon, TrayIconBuilder, Icon};
-use tray_icon::menu::{Menu, MenuItem, MenuEvent};
+use tray_icon::menu::{CheckMenuItem, Menu, MenuEvent, MenuItem, Submenu};
+use std::cell::RefCell;
+
+thread_local! {
+    static THEME_ITEMS: RefCell<Vec<(String, CheckMenuItem)>> = const { RefCell::new(Vec::new()) };
+}
 
 pub const FFMPEG_PATH: &str = r"C:\Users\antalervin19\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg.Shared_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.2-full_build-shared\bin\ffmpeg.exe";
 pub const BLENDER_PATH: &str = r"D:\SteamLibrary\steamapps\common\Blender\blender.exe";
@@ -14,6 +19,7 @@ pub const YTDLP_PATH: &str = r"C:\yt-dlp\yt-dlp.exe";
 
 fn main() {
     common::settings::load();
+    common::theme::load(&common::settings::get().theme);
 
     platform::windows::initialize_ole().expect("Failed to initialize OLE");
     platform::windows::register_app_id();
@@ -59,7 +65,21 @@ fn create_tray_icon() -> TrayIcon {
     let settings_item = MenuItem::new("Settings", true, None);
     let quit_item = MenuItem::new("Quit RingTool", true, None);
 
+    let current = common::settings::get().theme;
+    let theme_menu = Submenu::new("Theme", true);
+    let mut theme_ids = Vec::new();
+    for (stem, name) in common::theme::list() {
+        let item = CheckMenuItem::new(&name, true, stem == current, None);
+        theme_menu.append(&item).unwrap();
+        theme_ids.push((item.id().clone(), stem.clone()));
+        THEME_ITEMS.with(|items| items.borrow_mut().push((stem, item)));
+    }
+    let folder_item = MenuItem::new("Open themes folder", true, None);
+    theme_menu.append(&folder_item).unwrap();
+    let folder_id = folder_item.id().clone();
+
     menu.append(&settings_item).unwrap();
+    menu.append(&theme_menu).unwrap();
     menu.append(&quit_item).unwrap();
 
     let settings_id = settings_item.id().clone();
@@ -68,6 +88,18 @@ fn create_tray_icon() -> TrayIcon {
     MenuEvent::set_event_handler(Some(move |event: tray_icon::menu::MenuEvent| {
         if event.id == settings_id {
             platform::settings_window::open();
+        } else if event.id == folder_id {
+            if let Some(dir) = common::theme::dir() {
+                let _ = std::process::Command::new("explorer").arg(dir).spawn();
+            }
+        } else if let Some((_, stem)) = theme_ids.iter().find(|(id, _)| *id == event.id) {
+            common::settings::update(|s| s.theme = stem.clone());
+            common::theme::load(stem);
+            THEME_ITEMS.with(|items| {
+                for (item_stem, item) in items.borrow().iter() {
+                    item.set_checked(item_stem == stem);
+                }
+            });
         } else if event.id == quit_id {
             platform::windows::request_quit();
         }

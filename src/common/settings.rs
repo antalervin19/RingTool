@@ -24,6 +24,7 @@ pub struct Settings {
     pub video_crf: u32,
     pub image_quality: u32,
     pub ico_size: u32,
+    pub theme: String,
 }
 
 fn default_tool(path: &str, command: &str) -> String {
@@ -42,6 +43,7 @@ impl Default for Settings {
             video_crf: 23,
             image_quality: 90,
             ico_size: 256,
+            theme: "midnight".into(),
         }
     }
 }
@@ -101,6 +103,7 @@ pub fn load() {
             "video_crf" => settings.video_crf = number.unwrap_or(settings.video_crf),
             "image_quality" => settings.image_quality = number.unwrap_or(settings.image_quality),
             "ico_size" => settings.ico_size = number.unwrap_or(settings.ico_size),
+            "theme" if !value.is_empty() => settings.theme = value,
             _ => {}
         }
     }
@@ -124,7 +127,7 @@ pub fn update(change: impl FnOnce(&mut Settings)) {
     }
 
     let text = format!(
-        "ffmpeg={}\nblender={}\nytdlp={}\nuse_explorer_folder={}\ndisabled_formats={}\naudio_kbps={}\nvideo_crf={}\nimage_quality={}\nico_size={}\n",
+        "ffmpeg={}\nblender={}\nytdlp={}\nuse_explorer_folder={}\ndisabled_formats={}\naudio_kbps={}\nvideo_crf={}\nimage_quality={}\nico_size={}\ntheme={}\n",
         snapshot.ffmpeg,
         snapshot.blender,
         snapshot.ytdlp,
@@ -134,6 +137,7 @@ pub fn update(change: impl FnOnce(&mut Settings)) {
         snapshot.video_crf,
         snapshot.image_quality,
         snapshot.ico_size,
+        snapshot.theme,
     );
     let _ = std::fs::write(path, text);
 }

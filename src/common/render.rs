@@ -5,12 +5,6 @@ use fontdue::{Font, FontSettings};
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
-const ACCENTS: [(u8, u8, u8); 3] = [
-    (168, 85, 247),
-    (245, 158, 11),
-    (45, 156, 219),
-];
-
 const CATEGORY_COUNT: usize = 3;
 const OPTION_COUNT: usize = 4;
 
@@ -104,6 +98,7 @@ fn draw_label(pm: &mut Pixmap, text: &str, angle: f32, radius: f32, max_width: f
     }
 
     let font = get_font();
+    let ink = super::theme::get().ring_text;
     let chars: Vec<char> = text.chars().collect();
 
     let glyphs: Vec<_> = {
@@ -179,7 +174,13 @@ fn draw_label(pm: &mut Pixmap, text: &str, angle: f32, radius: f32, max_width: f
 
                 for channel in 0..4 {
                     let dst = pixels[index + channel] as u32;
-                    pixels[index + channel] = (alpha + dst * (255 - alpha) / 255).min(255) as u8;
+                    let src = match channel {
+                        0 => ink.0 as u32 * alpha / 255,
+                        1 => ink.1 as u32 * alpha / 255,
+                        2 => ink.2 as u32 * alpha / 255,
+                        _ => alpha,
+                    };
+                    pixels[index + channel] = (src + dst * (255 - alpha) / 255).min(255) as u8;
                 }
             }
         }
@@ -226,7 +227,8 @@ pub fn draw_segment(pm: &mut Pixmap, ring: &Ring, i: usize, accent: (u8, u8, u8)
     if lit {
         fill.set_color_rgba8(accent.0, accent.1, accent.2, 242);
     } else {
-        fill.set_color_rgba8(30, 34, 43, 216);
+        let base = super::theme::get().ring_fill;
+        fill.set_color_rgba8(base.0, base.1, base.2, 216);
     }
 
     pm.fill_path(&path, &fill, FillRule::Winding, Transform::identity(), None);
@@ -245,7 +247,7 @@ pub fn draw_segment(pm: &mut Pixmap, ring: &Ring, i: usize, accent: (u8, u8, u8)
 
 pub fn render_ring(active_category: Option<usize>, hovered_option: Option<usize>) -> Pixmap {
     let mut pm = Pixmap::new((2.0 * C) as u32, (2.0 * C) as u32).unwrap();
-    draw_circle(&mut pm, R1, (30, 34, 43), 230);
+    draw_circle(&mut pm, R1, super::theme::get().ring_fill, 230);
 
     let category_step = 360.0 / CATEGORY_COUNT as f32;
 
@@ -262,7 +264,7 @@ pub fn render_ring(active_category: Option<usize>, hovered_option: Option<usize>
             &mut pm,
             &ring,
             0,
-            ACCENTS[i],
+            super::theme::get().accents[i],
             active_category == Some(i),
         );
     }
@@ -284,7 +286,7 @@ pub fn render_ring(active_category: Option<usize>, hovered_option: Option<usize>
                 &mut pm,
                 &options,
                 i,
-                ACCENTS[category],
+                super::theme::get().accents[category],
                 hovered_option == Some(i),
             );
         }
@@ -323,7 +325,7 @@ pub fn render_menu(
                     &mut pm,
                     &ring,
                     i,
-                    (168, 85, 247),
+                    super::theme::get().accents[0],
                     lit,
                 );
 

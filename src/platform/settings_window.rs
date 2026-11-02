@@ -1,5 +1,6 @@
 use crate::common::render::{draw_text, text_width};
 use crate::common::settings;
+use crate::common::theme;
 use std::mem::size_of;
 use std::sync::atomic::{AtomicI32, AtomicIsize, AtomicUsize, Ordering};
 use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Stroke, Transform};
@@ -20,17 +21,6 @@ const W: i32 = 560;
 const H: i32 = 480;
 const TITLE_H: f32 = 64.0;
 
-const BG: (u8, u8, u8) = (14, 16, 21);
-const PANEL: (u8, u8, u8) = (30, 34, 43);
-const FIELD: (u8, u8, u8) = (24, 27, 35);
-const PURPLE: (u8, u8, u8) = (168, 85, 247);
-const AMBER: (u8, u8, u8) = (245, 158, 11);
-const BLUE: (u8, u8, u8) = (45, 156, 219);
-const TEXT: (u8, u8, u8, u8) = (248, 249, 252, 255);
-const MUTED: (u8, u8, u8, u8) = (176, 182, 196, 255);
-const LABEL: (u8, u8, u8, u8) = (214, 218, 228, 255);
-const DARK_TEXT: (u8, u8, u8, u8) = (14, 16, 21, 255);
-const EDGE: (u8, u8, u8) = (74, 81, 99);
 
 static SETTINGS_HWND: AtomicIsize = AtomicIsize::new(0);
 static HOVER: AtomicI32 = AtomicI32::new(-1);
@@ -62,18 +52,12 @@ enum Action {
 
 static TAB: AtomicUsize = AtomicUsize::new(0);
 
-const TABS: [(&str, (u8, u8, u8)); 3] = [("General", PURPLE), ("Formats", AMBER), ("Quality", BLUE)];
+const TABS: [(&str, usize); 3] = [("General", 0), ("Formats", 1), ("Quality", 2)];
 const TAB_H: f32 = 44.0;
 const CONTENT_Y: f32 = TITLE_H + TAB_H + 16.0;
-const GREEN: (u8, u8, u8) = (74, 222, 128);
-const GROUP_ACCENTS: [(u8, u8, u8); 4] = [PURPLE, AMBER, BLUE, GREEN];
 const CHIP_W: f32 = 54.0;
 
-const TOOLS: [(&str, (u8, u8, u8)); 3] = [
-    ("FFmpeg", PURPLE),
-    ("Blender", AMBER),
-    ("yt-dlp", BLUE),
-];
+const TOOLS: [(&str, usize); 3] = [("FFmpeg", 0), ("Blender", 1), ("yt-dlp", 2)];
 
 const QUALITY_ROWS: [(&str, &str); 4] = [
     ("Audio bitrate", "MP3, AAC, OGG, OPUS and M4A"),
@@ -270,26 +254,27 @@ fn fit_text(text: &str, size: f32, max_width: f32) -> String {
 }
 
 fn render(hover: i32) -> Pixmap {
+    let t = theme::get();
     let mut pm = Pixmap::new(W as u32, H as u32).unwrap();
     let full = Rect { x: 0.0, y: 0.0, w: W as f32, h: H as f32 };
-    fill(&mut pm, &round_rect(full, 0.0), BG, 255);
+    fill(&mut pm, &round_rect(full, 0.0), t.bg, 255);
 
     let bar = Rect { x: 0.0, y: 0.0, w: W as f32, h: TITLE_H };
-    fill(&mut pm, &round_rect(bar, 0.0), PANEL, 255);
-    bold(&mut pm, "RingTool", 28.0, 32.0, 22.0, TEXT);
+    fill(&mut pm, &round_rect(bar, 0.0), t.panel, 255);
+    bold(&mut pm, "RingTool", 28.0, 32.0, 22.0, t.text_rgba());
     let title_w = text_width("RingTool", 22.0);
-    draw_text(&mut pm, "Settings", 28.0 + title_w + 10.0, 33.0, 15.0, MUTED);
+    draw_text(&mut pm, "Settings", 28.0 + title_w + 10.0, 33.0, 15.0, t.muted_rgba());
 
     let tab = TAB.load(Ordering::Relaxed);
     let tab_bar = Rect { x: 0.0, y: TITLE_H, w: W as f32, h: TAB_H };
-    fill(&mut pm, &round_rect(tab_bar, 0.0), PANEL, 255);
+    fill(&mut pm, &round_rect(tab_bar, 0.0), t.panel, 255);
     let rule = Rect { x: 0.0, y: TITLE_H + TAB_H - 1.0, w: W as f32, h: 1.0 };
-    fill(&mut pm, &round_rect(rule, 0.0), EDGE, 255);
+    fill(&mut pm, &round_rect(rule, 0.0), t.edge, 255);
 
     if tab == 1 {
         for (group, (name, _)) in settings::FORMAT_GROUPS.iter().enumerate() {
             let y = CONTENT_Y + group as f32 * 78.0 + 6.0;
-            bold(&mut pm, name, 28.0, y, 12.0, LABEL);
+            bold(&mut pm, name, 28.0, y, 12.0, t.label_rgba());
         }
     }
 
@@ -305,19 +290,19 @@ fn render(hover: i32) -> Pixmap {
                 let active = tab == i;
                 let label = TABS[i].0;
                 let lw = text_width(label, 14.0);
-                let color = if active || hovered { TEXT } else { MUTED };
+                let color = if active || hovered { t.text_rgba() } else { t.muted_rgba() };
                 bold(&mut pm, label, rect.x + (rect.w - lw) / 2.0, rect.y + rect.h / 2.0 - 1.0, 14.0, color);
 
                 if active {
                     let underline = Rect { x: rect.x, y: rect.y + rect.h - 3.0, w: rect.w, h: 3.0 };
-                    fill(&mut pm, &round_rect(underline, 0.0), TABS[i].1, 255);
+                    fill(&mut pm, &round_rect(underline, 0.0), t.accents[TABS[i].1], 255);
                 }
             }
 
             Action::Format(group, index) => {
                 let name = settings::FORMAT_GROUPS[group].1[index];
                 let on = settings.format_enabled(name);
-                let accent = GROUP_ACCENTS[group];
+                let accent = t.accents[group];
                 let chip = round_rect(*rect, 10.0);
                 let label = name.to_uppercase();
                 let lw = text_width(&label, 12.0);
@@ -325,19 +310,19 @@ fn render(hover: i32) -> Pixmap {
 
                 if on {
                     fill(&mut pm, &chip, accent, 255);
-                    bold(&mut pm, &label, tx, ty, 12.0, DARK_TEXT);
+                    bold(&mut pm, &label, tx, ty, 12.0, t.button_text_rgba());
                 } else {
-                    fill(&mut pm, &chip, FIELD, 255);
-                    stroke(&mut pm, &chip, EDGE, 255, 1.5);
-                    draw_text(&mut pm, &label, tx, ty, 12.0, MUTED);
+                    fill(&mut pm, &chip, t.field, 255);
+                    stroke(&mut pm, &chip, t.edge, 255, 1.5);
+                    draw_text(&mut pm, &label, tx, ty, 12.0, t.muted_rgba());
                     let mut pb = PathBuilder::new();
                     pb.move_to(tx - 2.0, ty);
                     pb.line_to(tx + lw + 2.0, ty);
-                    stroke(&mut pm, &pb.finish().unwrap(), MUTED_RGB, 255, 1.2);
+                    stroke(&mut pm, &pb.finish().unwrap(), t.muted, 255, 1.2);
                 }
 
                 if hovered {
-                    stroke(&mut pm, &chip, (255, 255, 255), 255, 2.0);
+                    stroke(&mut pm, &chip, t.highlight, 255, 2.0);
                 }
             }
 
@@ -345,31 +330,31 @@ fn render(hover: i32) -> Pixmap {
                 let list = quality_list(row);
                 let index = quality_index(row, quality_value(&settings, row));
                 let at_edge = (dir < 0 && index == 0) || (dir > 0 && index + 1 == list.len());
-                let accent = [PURPLE, BLUE, AMBER, GREEN][row];
+                let accent = t.accents[[0, 2, 1, 3][row]];
 
                 if dir < 0 {
                     let card_rect = quality_card(row);
                     let card = round_rect(card_rect, 14.0);
-                    fill(&mut pm, &card, PANEL, 255);
-                    stroke(&mut pm, &card, EDGE, 255, 1.5);
+                    fill(&mut pm, &card, t.panel, 255);
+                    stroke(&mut pm, &card, t.edge, 255, 1.5);
 
-                    bold(&mut pm, QUALITY_ROWS[row].0, card_rect.x + 18.0, card_rect.y + 24.0, 13.5, TEXT);
-                    draw_text(&mut pm, QUALITY_ROWS[row].1, card_rect.x + 18.0, card_rect.y + 44.0, 11.0, MUTED);
+                    bold(&mut pm, QUALITY_ROWS[row].0, card_rect.x + 18.0, card_rect.y + 24.0, 13.5, t.text_rgba());
+                    draw_text(&mut pm, QUALITY_ROWS[row].1, card_rect.x + 18.0, card_rect.y + 44.0, 11.0, t.muted_rgba());
 
                     let value = quality_text(row, list[index]);
                     let vw = text_width(&value, 14.0);
-                    bold(&mut pm, &value, rect.x + rect.w + (84.0 - vw) / 2.0, rect.y + rect.h / 2.0, 14.0, TEXT);
+                    bold(&mut pm, &value, rect.x + rect.w + (84.0 - vw) / 2.0, rect.y + rect.h / 2.0, 14.0, t.text_rgba());
                 }
 
                 let button = round_rect(*rect, 10.0);
-                fill(&mut pm, &button, if at_edge { FIELD } else { accent }, 255);
+                fill(&mut pm, &button, if at_edge { t.field } else { accent }, 255);
                 if at_edge {
-                    stroke(&mut pm, &button, EDGE, 255, 1.5);
+                    stroke(&mut pm, &button, t.edge, 255, 1.5);
                 } else if hovered {
-                    stroke(&mut pm, &button, (255, 255, 255), 255, 2.0);
+                    stroke(&mut pm, &button, t.highlight, 255, 2.0);
                 }
 
-                let color = if at_edge { MUTED_RGB } else { (14, 16, 21) };
+                let color = if at_edge { t.muted } else { t.button_text };
                 let (cx, cy) = (rect.x + rect.w / 2.0, rect.y + rect.h / 2.0);
                 let mut pb = PathBuilder::new();
                 pb.move_to(cx - 6.0, cy);
@@ -381,7 +366,7 @@ fn render(hover: i32) -> Pixmap {
                 stroke(&mut pm, &pb.finish().unwrap(), color, 255, 2.2);
             }
             Action::Close => {
-                let color = if hovered { (239, 68, 68) } else { MUTED_RGB };
+                let color = if hovered { (239, 68, 68) } else { t.muted };
                 let (cx, cy) = (rect.x + rect.w / 2.0, rect.y + rect.h / 2.0);
                 if hovered {
                     fill(&mut pm, &PathBuilder::from_circle(cx, cy, 16.0).unwrap(), (239, 68, 68), 60);
@@ -395,13 +380,13 @@ fn render(hover: i32) -> Pixmap {
             }
 
             Action::Browse(i) => {
-                let accent = TOOLS[i].1;
+                let accent = t.accents[TOOLS[i].1];
                 let y = row_y(i);
 
-                bold(&mut pm, &TOOLS[i].0.to_uppercase(), 28.0, y + 12.0, 12.0, LABEL);
+                bold(&mut pm, &TOOLS[i].0.to_uppercase(), 28.0, y + 12.0, 12.0, t.label_rgba());
 
                 let exists = std::path::Path::new(paths[i]).is_file();
-                let dot = if exists { (74, 222, 128) } else { (248, 113, 113) };
+                let dot = if exists { t.accents[3] } else { (248, 113, 113) };
                 let label_w = text_width(&TOOLS[i].0.to_uppercase(), 12.0);
                 fill(&mut pm, &PathBuilder::from_circle(28.0 + label_w + 12.0, y + 12.0, 4.0).unwrap(), dot, 255);
                 draw_text(
@@ -410,39 +395,39 @@ fn render(hover: i32) -> Pixmap {
                     28.0 + label_w + 22.0,
                     y + 12.0,
                     11.0,
-                    MUTED,
+                    t.muted_rgba(),
                 );
 
                 let field = Rect { x: 28.0, y: y + 28.0, w: W as f32 - 56.0 - 96.0 - 12.0, h: 40.0 };
                 let path = round_rect(field, 12.0);
-                fill(&mut pm, &path, FIELD, 255);
-                stroke(&mut pm, &path, EDGE, 255, 1.5);
+                fill(&mut pm, &path, t.field, 255);
+                stroke(&mut pm, &path, t.edge, 255, 1.5);
                 let shown = fit_text(paths[i], 13.0, field.w - 28.0);
-                draw_text(&mut pm, &shown, field.x + 14.0, field.y + field.h / 2.0, 13.0, TEXT);
+                draw_text(&mut pm, &shown, field.x + 14.0, field.y + field.h / 2.0, 13.0, t.text_rgba());
 
                 let button = round_rect(*rect, 12.0);
                 fill(&mut pm, &button, accent, 255);
                 if hovered {
-                    stroke(&mut pm, &button, (255, 255, 255), 255, 2.0);
+                    stroke(&mut pm, &button, t.highlight, 255, 2.0);
                 }
                 let label = "Browse";
                 let lw = text_width(label, 13.0);
-                bold(&mut pm, label, rect.x + (rect.w - lw) / 2.0, rect.y + rect.h / 2.0, 13.0, DARK_TEXT);
+                bold(&mut pm, label, rect.x + (rect.w - lw) / 2.0, rect.y + rect.h / 2.0, 13.0, t.button_text_rgba());
             }
 
             Action::Toggle => {
                 let card = round_rect(*rect, 14.0);
-                fill(&mut pm, &card, PANEL, 255);
-                stroke(&mut pm, &card, if hovered { (255, 255, 255) } else { EDGE }, 255, 1.5);
+                fill(&mut pm, &card, t.panel, 255);
+                stroke(&mut pm, &card, if hovered { t.highlight } else { t.edge }, 255, 1.5);
 
-                bold(&mut pm, "Save downloaded links to the open Explorer folder", rect.x + 18.0, rect.y + 19.0, 13.5, TEXT);
-                draw_text(&mut pm, "Otherwise they go to your Downloads folder", rect.x + 18.0, rect.y + 37.0, 11.0, MUTED);
+                bold(&mut pm, "Save downloaded links to the open Explorer folder", rect.x + 18.0, rect.y + 19.0, 13.5, t.text_rgba());
+                draw_text(&mut pm, "Otherwise they go to your Downloads folder", rect.x + 18.0, rect.y + 37.0, 11.0, t.muted_rgba());
 
                 let track = Rect { x: rect.x + rect.w - 18.0 - 48.0, y: rect.y + 14.0, w: 48.0, h: 24.0 };
                 let on = settings.use_explorer_folder;
-                fill(&mut pm, &round_rect(track, 12.0), if on { AMBER } else { (84, 91, 110) }, 255);
+                fill(&mut pm, &round_rect(track, 12.0), if on { t.accents[1] } else { t.edge }, 255);
                 let knob_x = if on { track.x + track.w - 12.0 } else { track.x + 12.0 };
-                fill(&mut pm, &PathBuilder::from_circle(knob_x, track.y + 12.0, 9.0).unwrap(), (255, 255, 255), 255);
+                fill(&mut pm, &PathBuilder::from_circle(knob_x, track.y + 12.0, 9.0).unwrap(), t.highlight, 255);
             }
         }
     }
@@ -452,14 +437,13 @@ fn render(hover: i32) -> Pixmap {
         2 => "Applies to new conversions",
         _ => "Changes are saved automatically",
     };
-    draw_text(&mut pm, footer, 28.0, H as f32 - 24.0, 11.0, MUTED);
+    draw_text(&mut pm, footer, 28.0, H as f32 - 24.0, 11.0, t.muted_rgba());
 
-    stroke(&mut pm, &round_rect(Rect { x: 0.75, y: 0.75, w: W as f32 - 1.5, h: H as f32 - 1.5 }, 0.0), (74, 81, 99), 255, 1.5);
+    stroke(&mut pm, &round_rect(Rect { x: 0.75, y: 0.75, w: W as f32 - 1.5, h: H as f32 - 1.5 }, 0.0), t.edge, 255, 1.5);
 
     pm
 }
 
-const MUTED_RGB: (u8, u8, u8) = (176, 182, 196);
 
 fn hit_index(x: f32, y: f32) -> i32 {
     layout()
