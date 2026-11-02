@@ -24,7 +24,7 @@ RingTool is a small Windows tray app written in Rust. It works anywhere you can 
 3. **Move** to a segment. Some rings have a second level with more options.
 4. **Release** on the format you want. The conversion runs in the background.
 
-Converted files are new copies saved next to the original, and existing files are never overwritten. If the name is taken, `_1`, `_2` and so on is added. Releasing outside the ring does nothing.
+Converted files are new copies saved next to the original, and existing files are never overwritten.
 
 <p align="center">
   <img src="docs/ring-video.gif" alt="Video file: category ring with options" width="420">
@@ -40,8 +40,7 @@ Converted files are new copies saved next to the original, and existing files ar
 - **Download links:** drag a link onto the ring and download it as video or audio with yt-dlp.
 - **3D models:** convert between model formats through Blender.
 - **Notifications:** Windows notifications when a conversion starts, finishes or fails.
-- **Settings window:** tool paths, which formats appear on the ring, and quality settings.
-- **No console window** in release builds, and the exe carries the RingTool icon.
+- **Settings window:** tool paths, which formats appear on the ring, and quality settings..
 
 ## Supported conversions
 
@@ -69,7 +68,7 @@ Dragged links are downloaded with yt-dlp, so they work for the sites it supports
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) for link downloads (optional)
 - [Blender](https://www.blender.org/) 4.0 or newer for 3D models (optional)
 
-RingTool does not bundle or download these tools. Set their locations in **Settings** (see below).
+When installing via the RingToolInstaller these dependencies will be listed as optional downloadables! 
 
 ## Settings
 
@@ -147,4 +146,4 @@ Contributions are welcome, whether it's a bug report, a new format, or a whole f
 
 ---
 
-<p align="center">Made with a cursor and too many file formats.</p>
+<p align="center">Made with a cursor and waaay too many file formats.</p>
